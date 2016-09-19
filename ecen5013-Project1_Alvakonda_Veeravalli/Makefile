@@ -15,7 +15,7 @@ CC= gcc
 #compiler warnings
 CFLAG= -Wall -g -O0
 #Providing route for the cross compiled executable file to the beaglebone board 
-ROUTE = root@192.168.7.2:project1
+ROUTE = root@192.168.7.2:project
 
 
 #Selecting the platform to which the code is to be compiled for
