@@ -76,12 +76,12 @@ build:$(OBJECT_FILES)
 
 
 
-.PHONY:Build-lib
-#This rule builds a library, which is named libproject.a in our case
+.PHONY:build-lib
+#This rule builds a library, which is named project_1_library.a in our case
 build-lib: $(SOURCE_FILES)
 	ar rU project_1_library.a ./source/*.c
 	ranlib project_1_library.a
-#This  part  creates the tar version of libproject which is an archive file format  
+#This  part  creates the tar version of project_1_library which is an archive file format  
 	tar -cvf project_1_library.tar ./source/*.c   
 #This rule sends the executable file to the BeagleBoneBlack Board
 
