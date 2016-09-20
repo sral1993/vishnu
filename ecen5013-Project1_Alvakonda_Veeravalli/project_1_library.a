@@ -1,0 +1,422 @@
+!<arch>
+//                                              20        `
+project_1_report.c/
+data.c/         1474323121  1000  1000  100664  5972      `
+#include<stdio.h>
+#include<stdint.h>
+#include"data.h"
+
+//Defining a function my_itoa which is used to convert integer data into an ascii string and return it
+
+int8_t* my_itoa(int8_t *str, int32_t data, int32_t base)
+{
+int ascii_length, i, temp;
+int8_t *reverse;
+int8_t temp0;
+
+//Initializing the pointer reverse with the address passed in as the argument
+
+reverse=str;
+ascii_length=0;
+
+//If the entered integer input data is positive
+
+if(data>=0)
+{
+temp=data;
+
+
+//Finding the length of the ascii string to be generated
+while(temp!=0)
+{
+temp=temp/base;
+ascii_length++;
+}
+temp=data;
+i=0;
+
+/*Isolating the individual numbers (0-9) of the input integer data and storing them in a string which is to be converted to ascii. However the order of the numbers in the string are in reverse order. So the string need to be reversed before converting them in to ascii values*/
+
+while(i<ascii_length)
+{
+*str=(int8_t) (temp%10);
+temp=temp/base;
+i++;
+str++;
+}
+str--;
+
+//Reversing the string of individual numbers(0-9) of the input integer data so that it can be converted to their respective ascii values later
+
+while(str>reverse)
+{
+temp0=*str;
+*str=*reverse;
+*reverse=temp0;
+str--;
+reverse++;
+}
+if(ascii_length%2)
+str=str-ascii_length/2;
+else
+str=str-(ascii_length/2-1);
+i=0;
+
+//Replacing the string of numbers with their respective ASCII values and now the the ASCII string of the given input integer data is ready
+
+while(i<ascii_length)
+{
+*str=*str+48;
+str++;
+i++;
+}
+*str=0;
+
+//Making the str pointer point to the 1st element of the ASCII string for the given integer input data
+
+str=str-ascii_length;
+}
+
+//If the integer input data to be converted is negative
+
+else
+{
+*str=45;
+str++;
+temp=(data)*(-1);
+
+//Finding the length of the ascii string of the given integer input data 
+
+while(temp!=0)
+{
+temp=temp/base;
+ascii_length++;
+}
+temp=(data)*(-1);
+i=0;
+
+/*Isolating the individual numbers (0-9) of the input integer data and storing them in a string which is to be converted to ascii. However the order of the numbers in the string are in reverse order. So the string need to be reversed before converting them in to ascii values*/
+
+while(i<ascii_length)
+{
+*str=(int8_t) (temp%10);
+temp=temp/base;
+i++;
+str++;
+}
+str--;
+reverse++;
+//Reversing the string of individual numbers(0-9) of the input integer data so that it can be converted to their respective ascii values later
+
+while(str>reverse)
+{
+temp0=*str;
+*str=*reverse;
+*reverse=temp0;
+str--;
+reverse++;
+}
+if(ascii_length%2)
+str=str-ascii_length/2;
+else
+str=str-(ascii_length/2-1);
+
+i=0;
+
+while(i<ascii_length)
+{
+*str=*str+48;
+str++;
+i++;
+}
+*str=0;
+str=str-ascii_length;
+return str;
+}
+}
+
+
+
+//Defining a function my_atoi which is used to convert a given ascii string into integer data and return it
+
+
+int32_t my_atoi(int8_t *str)
+{
+int32_t integer=0;
+int8_t zero_ascii=48;
+
+//Checking if the integer data is positive or negative
+
+//If the integer data is positive
+
+if(*str==45)
+{
+str++;
+while((*str)!=0)
+{
+integer=integer*10+(int32_t)(*str-zero_ascii);
+str++;
+}
+integer=-integer;
+}
+
+//If the integer data is negative
+
+else
+{
+while((*str)!=0)
+{
+integer=integer*10+(int32_t)(*str-zero_ascii);
+str++;
+}
+}
+return integer;
+}
+
+
+//Defining a function dump_memory which takes a pointer to a string and prints out the hex output of the individual elements in the string
+
+void dump_memory(uint8_t* start,uint32_t length)
+{
+uint32_t quo;
+int count;
+int i=1,j,k,tmp;
+char hex[10];
+for(k=1;k<=length;k++)
+{
+count=0;
+quo=*start;       //Assigning *start to quotient which is the initial value of the pointing address
+while(quo!=0)
+{
+count++;
+tmp=quo % 16;     // Assigning quo mod 16 to the temporary varaible in order to find whether the values are 0 to 9 or from A to F
+if(tmp <10)
+tmp +=48;         // Adding 48 to temp moves the decimal value to Hexadecimal value for the range 0 to 9
+else
+tmp +=55;         // Adding 55 to temp moves the decimal value to Hexadecimal value for the range A to F
+hex[i++]=tmp;
+quo=quo/16;
+}
+if(count==1)
+hex[i++]=48;            // Appending zero for single digit output
+else if (count==0)
+{
+hex[i++]=48;            // Appending zero for double digit output
+hex[i++]=48;
+}
+printf("\n hexadecimal value of decimal number  %u is ",*start);
+for(j=i-1;j>i-3;j--)
+{
+printf("%c",hex[j]);     // printing the Hexadecimal OUTPUT
+}
+
+start++;
+}
+printf("\n");
+
+}
+
+//Defining function big_to_little which converts data in big endian representation to little endian representation
+
+
+uint32_t big_to_little(uint32_t data)
+{
+uint8_t *big_ptr, *small_ptr, temp;
+uint32_t little_endian,*small_endian_pointer;
+
+//Assigning the address of data to big_ptr and typecasting the pointer to uint8_t i.e. it points to data of length 1 byte
+
+big_ptr=(uint8_t *)&data;
+
+//Assigning the address of the byte with the highest address i.e the least significant bytes address to the pointer variable small_ptr
+
+small_ptr=big_ptr+3;
+
+//Converting data from big endian to little endian format i.e. reversing the order of the bytes
+
+while(big_ptr<small_ptr)
+{
+temp=*big_ptr;
+*big_ptr=*small_ptr;
+*small_ptr=temp;
+small_ptr--;
+big_ptr++;
+}
+
+small_ptr--;
+small_endian_pointer=(uint32_t *) small_ptr;
+little_endian= *small_endian_pointer;
+return little_endian;
+}
+
+
+//Defining a function little_to_big which converts data in big endian representation to small endian
+
+
+uint32_t little_to_big(uint32_t data)
+{
+uint8_t *little_ptr, *big_ptr, temp;
+uint32_t big_endian,*big_endian_pointer;
+
+//Assigning the address of data to little_ptr and typecasting the pointer to uint8_t i.e. it points to data of length 1 byte
+
+little_ptr=(uint8_t *)&data;
+
+//Assigning the address of the byte with the highest address to the variable big_ptr
+
+big_ptr=little_ptr+3;
+
+//Converting data from little endian representation to big endian representation
+
+while(big_ptr>little_ptr)
+{
+temp=*big_ptr;
+*big_ptr=*little_ptr;
+*little_ptr=temp;
+little_ptr++;
+big_ptr--;
+}
+big_ptr--;
+big_endian_pointer=(uint32_t *) big_ptr;
+big_endian= *big_endian_pointer;
+return big_endian;
+}
+main.c/         1474224197  1000  1000  100664  85        `
+
+#include<stdio.h>
+#include"project_1_report.h"
+
+void main()
+{
+project_1_report();
+}
+
+memory.c/       1474257934  1000  1000  100664  689       `
+
+
+#include "memory.h"
+#include<stdint.h>
+#include<stdio.h>
+
+//memmove
+
+int8_t my_memmove(uint8_t * src,uint8_t *dst,uint32_t length)
+{
+int k=0;
+if (length >0)
+{
+src=src+length-1;
+dst=dst+length-1;
+while(k<length)
+{
+*dst=*src;
+src--;
+dst--;
+k++;
+}
+return 0;
+}
+else
+{
+printf("error");
+}
+}
+
+//memzero
+
+int8_t my_memzero(uint8_t * src, uint32_t length)
+{
+int k=0;
+//uint8_t j;
+if(length>0)
+{
+for(k=0;k<length;k++)
+{
+*src=0;
+src++;
+}
+}
+else
+{
+printf("error  \n");
+}
+src=src-length+1;
+}
+
+
+//reverse
+
+int8_t my_reverse(uint8_t *src,uint32_t length)
+{
+uint8_t  *trgt;
+int temp;
+trgt=src+length-1;
+while(trgt>src)
+{
+temp=*trgt;
+*trgt=*src;
+*src=temp;
+trgt--;
+src++;
+}
+src=src-length+1;
+return 1;
+}
+
+/0              1474327732  1000  1000  100664  1063      `
+#include<stdio.h>
+#include<stdint.h>
+#include"memory.h"
+
+
+void project_1_report()
+{
+int8_t i ;                                     
+int8_t arr[32];                                //Creating an array of 32 bytes
+uint8_t *aptr1, *aptr2, *aptr3;                //Declaring 3 pointers
+
+//Initializing the addresses to which the pointesr should point to
+
+aptr1=(uint8_t *) &arr[0];                     
+aptr2=(uint8_t *)&arr[8];
+aptr3=(uint8_t *)&arr[16];
+
+//Initializing 16 elements of the array starting from the address aptr1 points to with the values 31-46
+
+for (i=0; i<16; i++)
+{
+*aptr1=i+31;
+aptr1++;
+}
+aptr1-=16;
+
+//Initializing elements starting from the address aptr 3 to the values zero
+
+my_memzero(aptr3,16);
+
+//Moving 8 bytes of data from aptr1 to aptr3
+
+my_memmove(aptr1, aptr3,8 );
+
+//Moving 16 bytes of data from aptr2 to aptr1
+
+my_memmove(aptr2, aptr1, 16);
+
+//Reversing the entire array
+
+my_reverse(aptr1, 32);
+
+printf("The array after reschuffling is as follows:\n");
+for(i=0; i<32; i++)
+{
+printf("%u,", *aptr1++);
+}
+aptr1-=32;
+printf("\n");
+} 
+
+
+
+
+
+
