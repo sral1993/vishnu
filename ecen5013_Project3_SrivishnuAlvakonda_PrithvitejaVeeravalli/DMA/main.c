@@ -1,5 +1,5 @@
 /*
- * uart.c
+ * main.c
  *
  *  Created on: Oct 31, 2016
  *      Author: Vishnu
