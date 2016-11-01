@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Freescale Semiconductor, Inc.
+ * Copyright (c) 2015, Freescale Semiconductor, Inc
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -34,17 +34,6 @@
  *  Created on: Oct 31, 2016
  *      Author: Vishnu
  */
-
-#ifndef SOURCES_LOG_H_
-#define SOURCES_LOG_H_
-#include <stdint.h>
-
-void LOG(char *p,int len);
-void LOG1(char *p,int l,int param,int data_type_size);
-
-
-
-#endif /* SOURCES_LOG_H_ */
 
 #include "itoa.h"
 
@@ -151,4 +140,5 @@ str=str-ascii_length;
 return str;
 }
 }
+
 
