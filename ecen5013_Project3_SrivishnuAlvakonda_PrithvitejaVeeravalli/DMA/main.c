@@ -1,9 +1,11 @@
 /*
  * main.c
  *
- *  Created on: Oct 31, 2016
+ *  Created on: Nov 5, 2016
  *      Author: Vishnu
  */
+
+
 #include "MKL25Z4.h"
 #include<stdint.h>
 #include<string.h>
@@ -13,11 +15,25 @@
 #include "itoa.h"
 
 
-void dma_init(int *src,int *dst);
-void dma_init2(int *src,int *dst);
+uint32_t *src,*dst;
+uint32_t s[1000];
+uint32_t d[1000];
+uint32_t memzero=0;
+//uint32_t x[4]={10,100,1000,5000};
+uint32_t length=5000;
+
+uint32_t check;
+
+
+void dma_init();
+void dma_init1();
+void dma_init2();
+void memmove_dma();
+void memzero_dma();
 void start();
 void TPM2_Setup();
 int stop();
+
 
 void TPM2_Setup()
 {
@@ -45,197 +61,120 @@ int stop()
 
 void main()
 {
-	int memzero=1;
-	if(memzero==0)
+	int i=0,j=0;
+	check=length;
+	src = &s[0];
+	dst = &d[0];
+	memmove_dma();
+    //memzero_dma();
+}
+
+void memmove_dma()
+{
+	if((length % 4)==0)
 	{
-		int src_addr= 0x1234;
-	     int *src;
-		    int dst_addr= 0x2579;
-		    int *dst;
-		    src = &src_addr;
-		    dst = &dst_addr;
-    int byt_num = 10;
-    int count;
-    if((byt_num % 4)==0)
-    {
-    	if((byt_num % 4)==0)
-    	    {
-    	    count = (byt_num/4);
-    	    }
-    	    else
-    	    {
-    	    count = (byt_num/4)+1;
-    	    }
-    	    int current_state=0;
+		if((src+length-1)<dst)
+			{
+				dma_init();
+				start();
+				DMA_DCR0|=DMA_DCR_START_MASK;
+			}
+			else
+			{
+				src=src+length-1;
+				dst=dst+length-1;
+				dma_init1();
+			    start();
+				DMA_DCR0|=DMA_DCR_START_MASK;
+			}
+	}
+	else
+	{
+		int mod,div;
+		mod=length%4;
+		div=length/4;
+		length=div*4;
+		if((src+length-1)<dst)
+					{
+						dma_init();
+						start();
+						DMA_DCR0|=DMA_DCR_START_MASK;
+						length=mod;
+						dma_init2();
+						check=4;
+						DMA_DCR0|=DMA_DCR_START_MASK;
+					}
+					else
+					{
+						src=src+length-1;
+						dst=dst+length-1;
+						dma_init1();
+						length=mod;
+						dma_init2();
+					    start();
+						DMA_DCR0|=DMA_DCR_START_MASK;
+					}
 
-    		start();
-    		while(current_state < count)
-    		{
-    			dma_init(src,dst);
-    			src++;
-    			dst++;
-    			current_state++;
-    		}
 
-
-
-    	int time2=stop();
-    		char str1[]="time for memmove_dma for 100bytes in us                                    :";
-    		int l1=strlen(str1);
-    		LOG1(str1,l1,time2,8);
-    }
-    else
-    {
-    	int current_state=0;
-    	count = (byt_num/4);
-    	    		start();
-    	    		while(current_state < count)
-    	    		{
-    	    			dma_init(src,dst);
-    	    			src++;
-    	    			dst++;
-    	    			current_state++;
-    	    		}
-    	int mod;
-    	mod= (byt_num % 4);
-    	int x=0;
-    	while(x < mod)
-    	{
-    	dma_init2(src,dst);
-    	x++;
-    	}
-    	int time2=stop();
-    	    		    		char str1[]="time for memmove_dma for 10bytes in us                                     :";
-    	    		    		int l1=strlen(str1);
-    	    		    		LOG1(str1,l1,time2,8);
-
-    }
 
 	}
 
-if(memzero==1)
+}
+
+void memzero_dma()
 {
-	int  src_addr,dst_addr;
-			    int *src, *temp;
-			    temp= &src_addr;
-			    src = &src_addr;
-			    int *dst;
-			    dst = &dst_addr;
-	    uint32_t byt_num = 10;
-	    //uint32_t byt_num = 100;
-	    //uint32_t byt_num = 1000;
-	    //uint32_t byt_num = 5000;
-	    int zerocount=byt_num;
-	    int count;
-
-	    if(memzero==1)
-	    {
-	    	int k=1;
-	    	while(k<zerocount+1)
-	    	{
-	    		*temp=0;
-	    		temp++;
-	    		k++;
-	    	}
-	    }
-
-
-
-	        if((byt_num % 4)==0)
-	    {
-	    	if((byt_num % 4)==0)
-	    	    {
-	    	    count = (byt_num/4);
-	    	    }
-	    	    else
-	    	    {
-	    	    count = (byt_num/4)+1;
-	    	    }
-	    	    int current_state=0;
-
-	    		start();
-
-	    		while(current_state < count)
-	    		{
-	    			dma_init(src,dst);
-	    			src++;
-	    			dst++;
-	    			current_state++;
-	    		}
+	*src=0;
+	if((length % 4)==0)
+		{
+			if((src+length-1)<dst)
+				{
+					dma_init();
+					start();
+					DMA_DCR0|=DMA_DCR_START_MASK;
+				}
+				else
+				{
+					src=src+length-1;
+					dst=dst+length-1;
+					dma_init1();
+				    start();
+					DMA_DCR0|=DMA_DCR_START_MASK;
+				}
+		}
+		else
+		{
+			int mod,div;
+			mod=length%4;
+			div=length/4;
+			length=div*4;
+			if((src+length-1)<dst)
+						{
+							dma_init();
+							start();
+							DMA_DCR0|=DMA_DCR_START_MASK;
+							length=mod;
+							dma_init2();
+							check=4;
+							DMA_DCR0|=DMA_DCR_START_MASK;
+						}
+						else
+						{
+							src=src+length-1;
+							dst=dst+length-1;
+							dma_init1();
+							length=mod;
+							dma_init2();
+						    start();
+							DMA_DCR0|=DMA_DCR_START_MASK;
+						}
 
 
 
-	    	int time2=stop();
-	    	if(byt_num>1150 && byt_num<2300 )
-	    	{
-	    		time2=time2+2974;
-	    	}
-	    	if(byt_num>2300 && byt_num<3450 )
-	    	    	{
-	    	    		time2=time2+(2*2974);
-	    	    	}
-	    	if(byt_num>3450 && byt_num<4600 )
-	    	    	    	{
-	    	    	    		time2=time2+(3*2974);
-	    	    	    	}
-	    	if(byt_num>4600 && byt_num<5750 )
-	    	    	    	{
-	    	    	    		time2=time2+(3*2974);
-	    	    	    	}
-	    		char str1[]="time for memzero_dma for 100bytes in us                                    :";
-	    		//char str1[]="time for memzero_dma for 1000bytes in us                                   :";
-	    		//char str1[]="time for memzero_dma for 5000bytes in us                                   :";
-	    		int l1=strlen(str1);
-	    		LOG1(str1,l1,time2,8);
-	    }
-	    else
-	    {
-	    	int current_state=0;
-	    	count = (byt_num/4);
-	    	    		start();
-	    	    		while(current_state < count)
-	    	    		{
-	    	    			dma_init(src,dst);
-	    	    			src++;
-	    	    			dst++;
-	    	    			current_state++;
-	    	    		}
-	    	int mod;
-	    	mod= (byt_num % 4);
-	    	int x=0;
-	    	while(x < mod)
-	    	{
-	    	dma_init2(src,dst);
-	    	x++;
-	    	}
-	    	int time2=stop();
-	    	if(byt_num>1150 && byt_num<2300 )
-	    	    	{
-	    	    		time2=time2+2974;
-	    	    	}
-	    	    	if(byt_num>2300 && byt_num<3450 )
-	    	    	    	{
-	    	    	    		time2=time2+(2*2974);
-	    	    	    	}
-	    	    	if(byt_num>3450 && byt_num<4600 )
-	    	    	    	    	{
-	    	    	    	    		time2=time2+(3*2974);
-	    	    	    	    	}
-	    	    	if(byt_num>4600 && byt_num<5750 )
-	    	    	    	    	{
-	    	    	    	    		time2=time2+(3*2974);
-	    	    	    	    	}
-	    	    		    		char str1[]=" time for memzero_dma for 10bytes in us                                       :";
-	    	    		    		int l1=strlen(str1);
-	    	    		    		LOG1(str1,l1,time2,8);
-
-	    }
-
-}
+		}
 }
 
 
-void dma_init(int *src,int *dst)
+void dma_init()
 {
 
 	//ready = 0;
@@ -248,28 +187,42 @@ void dma_init(int *src,int *dst)
 	// Disable DMA Mux channel first
 	DMAMUX0_CHCFG0 = 0x00;
 
-	// Configure DMA
-	//DMA_SAR0 = (uint32_t)&ADC0_RA;
-	DMA_SAR0 = src;
-	//DMA_DAR0 = (uint32_t)&value;
-	DMA_DAR0 = dst;
-	DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(4); // 2 bytes (16 bits) per transfer
+	DMA0->DMA[0].DSR_BCR=DMA_DSR_BCR_DONE_MASK;// Writing a 1 to this bit clears all DMA status bits
+	DMA0->DMA[0].DSR_BCR|=DMA_DSR_BCR_BCR_MASK&length;//no of bytes
 
+
+
+		// Configure DMA
+			//DMA_SAR0 = (uint32_t)&ADC0_RA;
+			//DMA_SAR0 = (uint32_t) s;
+			DMA_SAR0 = src;
+			//DMA_DAR0 = (uint32_t)&value;
+			//DMA_DAR0 = (uint32_t) d;
+			DMA_DAR0 = dst;
+			//DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(4); // 2 bytes (16 bits) per transfer
+if(memzero==0)
+{
+			DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
+						 DMA_DCR_SSIZE(0) |		// Set source size to 16 bits
+						 DMA_DCR_SINC_MASK|
+						 DMA_DCR_DINC_MASK|		// Set increments to destination address
+						 DMA_DCR_DSIZE(0));		// Set destination size of 16 bits
+}
+else
+{
 	DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
-				 DMA_DCR_ERQ_MASK |		// Enable peripheral request
-				 DMA_DCR_CS_MASK  |
-				 DMA_DCR_SSIZE(4) |		// Set source size to 16 bits
-				 DMA_DCR_DINC_MASK|		// Set increments to destination address
-				 DMA_DCR_DMOD(2)  |     // Destination address modulo of 16 bytes
-				 DMA_DCR_DSIZE(4));		// Set destination size of 16 bits
+							 DMA_DCR_SSIZE(0) |		// Set source size to 16 bits
+							 DMA_DCR_DINC_MASK|		// Set increments to destination address
+							 DMA_DCR_DSIZE(0));		// Set destination size of 16 bits
 
+}
 
 	// Enable DMA channel and source
 	//DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(40); // Enable DMA channel and set ADC0 as source
-     DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK;
+     DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK|DMAMUX_CHCFG_SOURCE(60);
 	// Enable interrupt
 	NVIC_EnableIRQ(DMA0_IRQn);
-	DMA_DCR_START_MASK;
+
 }
 
 /*
@@ -278,15 +231,72 @@ void dma_init(int *src,int *dst)
  * */
 void DMA0_IRQHandler(void)
 {
-	/* Enable DMA0*/
-	DMA_DSR_BCR_DONE_MASK;
-	DMA_DSR_BCR0 |= DMA_DSR_BCR_DONE_MASK;	// Clear Done Flag
-	//DMA_DSR_BCR0 |= DMA_DSR_BCR_BCR(4);		// Set byte count register
-	//ready += 1;
+	if( (check % 4)==0)
+	{
+	int time1=stop();
+	char str[]=" DMA time for memzero 5000 bytes in us:                                        ";
+	int l=strlen(str);
+	LOG1(str,l,time1,8);
+	__disable_irq();
+	}
 
 }
 
-void dma_init2(int *src,int *dst)
+void dma_init1()
+{
+
+   int i=1;
+   while(i<length)
+   {
+	   int k=1;
+	   // Enable clocks
+	   	SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK;
+	   	SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
+
+	   	// Config DMA Mux for ADC operation
+	   	// Disable DMA Mux channel first
+	   	DMAMUX0_CHCFG0 = 0x00;
+
+	   	DMA0->DMA[0].DSR_BCR=DMA_DSR_BCR_DONE_MASK;// Writing a 1 to this bit clears all DMA status bits
+	   	DMA0->DMA[0].DSR_BCR|=DMA_DSR_BCR_BCR_MASK&k;//no of bytes
+
+	   	// Configure DMA
+	   	//DMA_SAR0 = (uint32_t)&ADC0_RA;
+	   	//DMA_SAR0 = (uint32_t) s;
+	   	DMA_SAR0 = src;
+	   	//DMA_DAR0 = (uint32_t)&value;
+	   	//DMA_DAR0 = (uint32_t) d;
+	   	DMA_DAR0 = dst;
+	   	//DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(4); // 2 bytes (16 bits) per transfer
+	   	if(memzero==0)
+	   	{
+	   				DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
+	   							 DMA_DCR_SSIZE(0) |		// Set source size to 16 bits
+	   							 DMA_DCR_SINC_MASK|
+	   							 DMA_DCR_DINC_MASK|		// Set increments to destination address
+	   							 DMA_DCR_DSIZE(0));		// Set destination size of 16 bits
+	   	}
+	   	else
+	   	{
+	   		DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
+	   								 DMA_DCR_SSIZE(0) |		// Set source size to 16 bits
+	   								 DMA_DCR_DINC_MASK|		// Set increments to destination address
+	   								 DMA_DCR_DSIZE(0));		// Set destination size of 16 bits
+
+	   	}
+	   	// Enable DMA channel and source
+	   	//DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(40); // Enable DMA channel and set ADC0 as source
+	        DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK|DMAMUX_CHCFG_SOURCE(60);
+	   	// Enable interrupt
+	   	NVIC_EnableIRQ(DMA0_IRQn);
+	   	i++;
+	   	src=src-2;
+	   	dst=dst-2;
+   }
+
+}
+
+void dma_init2()
 {
 
 	//ready = 0;
@@ -299,26 +309,41 @@ void dma_init2(int *src,int *dst)
 	// Disable DMA Mux channel first
 	DMAMUX0_CHCFG0 = 0x00;
 
-	// Configure DMA
-	//DMA_SAR0 = (uint32_t)&ADC0_RA;
-	DMA_SAR0 = src;
-	//DMA_DAR0 = (uint32_t)&value;
-	DMA_DAR0 = dst;
-	DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(1); // 2 bytes (16 bits) per transfer
+	DMA0->DMA[0].DSR_BCR=DMA_DSR_BCR_DONE_MASK;// Writing a 1 to this bit clears all DMA status bits
+	DMA0->DMA[0].DSR_BCR|=DMA_DSR_BCR_BCR_MASK&length;//no of bytes
 
+
+
+		// Configure DMA
+			//DMA_SAR0 = (uint32_t)&ADC0_RA;
+			//DMA_SAR0 = (uint32_t) s;
+			DMA_SAR0 = src;
+			//DMA_DAR0 = (uint32_t)&value;
+			//DMA_DAR0 = (uint32_t) d;
+			DMA_DAR0 = dst;
+			//DMA_DSR_BCR0 = DMA_DSR_BCR_BCR(4); // 2 bytes (16 bits) per transfer
+if(memzero==0)
+{
+			DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
+						 DMA_DCR_SSIZE(1) |		// Set source size to 16 bits
+						 DMA_DCR_SINC_MASK|
+						 DMA_DCR_DINC_MASK|		// Set increments to destination address
+						 DMA_DCR_DSIZE(1));		// Set destination size of 16 bits
+}
+else
+{
 	DMA_DCR0 |= (DMA_DCR_EINT_MASK|		// Enable interrupt
-				 DMA_DCR_ERQ_MASK |		// Enable peripheral request
-				 DMA_DCR_CS_MASK  |
-				 DMA_DCR_SSIZE(1) |		// Set source size to 16 bits
-				 DMA_DCR_DINC_MASK|		// Set increments to destination address
-				 DMA_DCR_DMOD(1)  |     // Destination address modulo of 16 bytes
-				 DMA_DCR_DSIZE(1));		// Set destination size of 16 bits
+							 DMA_DCR_SSIZE(1) |		// Set source size to 16 bits
+							 DMA_DCR_DINC_MASK|		// Set increments to destination address
+							 DMA_DCR_DSIZE(1));		// Set destination size of 16 bits
 
+}
 
 	// Enable DMA channel and source
 	//DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(40); // Enable DMA channel and set ADC0 as source
-     DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK;
+     DMAMUX0_CHCFG0 |= DMAMUX_CHCFG_ENBL_MASK|DMAMUX_CHCFG_SOURCE(60);
 	// Enable interrupt
 	NVIC_EnableIRQ(DMA0_IRQn);
-	DMA_DCR_START_MASK;
+
 }
+
