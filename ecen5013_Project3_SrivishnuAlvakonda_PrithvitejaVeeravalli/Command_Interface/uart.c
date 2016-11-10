@@ -5,35 +5,6 @@
  *      Author: Prithvi
  */
 
-/*
- * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * o Redistributions of source code must retain the above copyright notice, this list
- *   of conditions and the following disclaimer.
- *
- * o Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * o Neither the name of Freescale Semiconductor, Inc. nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
 
 #include "MKL25Z4.h"
@@ -59,8 +30,8 @@ typedef enum cmdi_t{
 	G_increase=0x37,
 	G_decrease=0x38,
 	B_increase=0x39,
-	B_decrease=0x62,
-	do_memmove=0x64
+	B_decrease=0x40,
+	do_memmove=0x41
 }cmdi;
 
 typedef struct CI_Msg_t{
@@ -72,6 +43,12 @@ typedef struct CI_Msg_t{
 }CI_Msg;
 
 CI_Msg x;
+
+CI_Msg *cmd_ptr = &x;
+
+int ovfw=0;
+
+void Command_Inteface(CI_Msg *cmd_ptr);
 
 int8_t my_memmove(uint8_t * src,uint8_t *dst,uint8_t height)
 {
@@ -90,11 +67,42 @@ k++;
 return 0;
 }
 
-int add(t,e)
+
+void Command_Inteface(CI_Msg *cmd_ptr)
 {
-	int z;
-	z=t+e;
-	return z;
+	while(!(UART0_S1 & UART_S1_RDRF_MASK));
+	cmd_ptr->command=UART0_D;
+	while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
+	UART0_D= cmd_ptr->command;
+	while(!(UART0_S1 & UART_S1_RDRF_MASK));
+	cmd_ptr->len = UART0_D;
+	while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
+	UART0_D = cmd_ptr->len;
+	int f=0x00,y=0;
+	while(f<cmd_ptr->len)
+			 {
+				 while(!(UART0_S1 & UART_S1_RDRF_MASK));
+				 cmd_ptr->data[y] = UART0_D;
+				 while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
+				 UART0_D = cmd_ptr->data[y];
+				 y++;
+				 f++;
+			 }
+
+	        while(!(UART0_S1 & UART_S1_RDRF_MASK));
+	        cmd_ptr->checksum = UART0_D;
+			while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
+			UART0_D = cmd_ptr->checksum;
+            if(ovfw==1)
+            {
+			while(!(UART0_S1 & UART_S1_RDRF_MASK));
+			ovfw=UART0_D;
+			while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
+			UART0_D = ovfw;
+			ovfw=ovfw<<8;
+			cmd_ptr->checksum=cmd_ptr->checksum|ovfw;
+            }
+
 }
 void UART0_IRQHandler()
 {
@@ -103,59 +111,30 @@ void UART0_IRQHandler()
 
 		while(1)
  {
-		while(!(UART0_S1 & UART_S1_RDRF_MASK));
-		x.command=UART0_D;
-		while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
-		UART0_D= x.command;
-		 while(!(UART0_S1 & UART_S1_RDRF_MASK));
-		 x.len = UART0_D;
-		 while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
-		 UART0_D = x.len;
-		 int f=0x30,y=0;
-		 while(f<x.len)
-		 {
-			 while(!(UART0_S1 & UART_S1_RDRF_MASK));
-			 x.data[y] = UART0_D;
-			 while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
-			 UART0_D = x.data[y];
-			 y++;
-			 f++;
-		 }
-        int ovfw=0;
-        while(!(UART0_S1 & UART_S1_RDRF_MASK));
-		x.checksum = UART0_D;
-		while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
-		UART0_D = x.checksum;
 
-		while(!(UART0_S1 & UART_S1_RDRF_MASK));
-		ovfw=UART0_D;
-		while(!(UART0->S1 & UART_S1_TDRE_MASK) && !(UART0->S1 &UART_S1_TC_MASK));
-		UART0_D = ovfw;
-		ovfw=ovfw<<8;
-		x.checksum=x.checksum|ovfw;
+		Command_Inteface(cmd_ptr);
+		int j=0;
 		uint16_t syscheck=0;
-		syscheck= x.command+x.len+x.data[0]+x.data[1] ;
-        if(syscheck==x.checksum)
+
+		syscheck= cmd_ptr->command+cmd_ptr->len;
+		while(j<cmd_ptr->len)
+		{
+		syscheck= syscheck+cmd_ptr->data[j];
+		j++;
+		}
+        if(syscheck==cmd_ptr->checksum)
         {
 
 
-		if(x.data[0]== 0x31)
-		{
-			Mod=32000;
-		}
-		else
-		{
-			Mod=0;
-		}
 
-		if(x.command == do_memmove)
+
+		if(cmd_ptr->command == do_memmove)
 		{
-		if(x.data[1]== 0x68)
-		{
-		height=	8;
+
+		height=	cmd_ptr->data[1];
 		src=(uint8_t *) arr;
 	    dst= (uint8_t *)b;
-	    //light= add(2,3);
+
 	    my_memmove(src,dst,height);
         LED_OFF();
 	    Mod=32000;
@@ -167,58 +146,40 @@ void UART0_IRQHandler()
 	    				LED_OFF();
 
 
-//		my_memmove(src,dst,height);
-		//if(light == 0)
-		//{
-			/*while(h<10)
-			{
-				Mod=32000;
-				LED_OFF();
-				LED_RED(Mod);
-				while(m<10000)
+		}
+
+		if(cmd_ptr->data[0]== 0x31)
 				{
-					m++;
+					Mod=32000;
 				}
-				LED_OFF();
-				LED_GREEN(Mod);
-				while(m<10000)
-								{
-									m++;
-								}
-				LED_OFF();
-				LED_BLUE(Mod);
-				while(m<10000)
-								{
-									m++;
-								}
-				h++;
-			}*/
-		//}
-		}
-		}
-		       if(x.command == R_on)
+				else
+				{
+					Mod=0;
+				}
+
+		       if(cmd_ptr->command == R_on)
 		       {
 		    	   LED_OFF();
 
 		    	   LED_RED(Mod);
 		       }
-		       if(x.command == B_on)
+		       if(cmd_ptr->command == B_on)
 		       {
 		    	   LED_OFF();
 
 		    	   LED_BLUE(Mod);
 		       }
-		       if(x.command == G_on)
+		       if(cmd_ptr->command == G_on)
 		       {
 		    	   LED_OFF();
 
 		    	   LED_GREEN(Mod);
 		       }
-               if(x.command == All_off)
+               if(cmd_ptr->command == All_off)
                {
             	   LED_OFF();
                }
-               if(x.command == R_increase)
+               if(cmd_ptr->command == R_increase)
                {
             	   if(intensity==10)
             	   	{
@@ -228,7 +189,7 @@ void UART0_IRQHandler()
             	   }
             	  else
             	   	{
-            		  if(x.data[0]== 0x31)
+            		  if(cmd_ptr->data[0]== 0x31)
             		  {
             			  intensity=intensity+1;
             		  }
@@ -238,7 +199,7 @@ void UART0_IRQHandler()
             	   	}
                }
 
-               if(x.command == R_decrease)
+               if(cmd_ptr->command == R_decrease)
                {
             	   if(intensity==0)
             	   	{
@@ -248,7 +209,7 @@ void UART0_IRQHandler()
             	   	}
             	   	else
             	   	{
-            	   		if(x.data[0]== 0x31)
+            	   		if(cmd_ptr->data[0]== 0x31)
             	   		{
             	   			intensity=intensity-1;
             	   		}
@@ -258,7 +219,7 @@ void UART0_IRQHandler()
             	   	LED_RED(Mod);
             	   	}
                }
-             if(x.command == G_increase)
+             if(cmd_ptr->command == G_increase)
                               {
                            	   if(intensity==10)
                            	   	{
@@ -268,7 +229,7 @@ void UART0_IRQHandler()
                            	   	}
                            	   else
                            	   	{
-                           		if(x.data[0]== 0x31)
+                           		if(cmd_ptr->data[0]== 0x31)
                            		{
                            			intensity=intensity+1;
                            		}
@@ -278,7 +239,7 @@ void UART0_IRQHandler()
                            	   	}
                               }
 
-                              if(x.command == G_decrease)
+                              if(cmd_ptr->command == G_decrease)
                               {
                            	   if(intensity==0)
                            	   	{
@@ -288,7 +249,7 @@ void UART0_IRQHandler()
                            	   	}
                            	   	else
                            	   	{
-                           	   	if(x.data[0]== 0x31)
+                           	   	if(cmd_ptr->data[0]== 0x31)
                            	   	            	   		{
                            	   	            	   			intensity=intensity-1;
                            	   	            	   		}
@@ -297,7 +258,7 @@ void UART0_IRQHandler()
                            	   	LED_GREEN(Mod);
                            	   	}
                               }
-                              if(x.command == B_increase)
+                              if(cmd_ptr->command == B_increase)
                                              {
                                           	   if(intensity==10)
                                           	   	{
@@ -307,7 +268,7 @@ void UART0_IRQHandler()
                                           	   	}
                                           	   else
                                           	   	{
-                                          		 if(x.data[0]== 0x31)
+                                          		 if(cmd_ptr->data[0]== 0x31)
                                           		                            		{
                                           		                            			intensity=intensity+1;
                                           		                            		}
@@ -317,7 +278,7 @@ void UART0_IRQHandler()
                                           	   	}
                                              }
 
-                                             if(x.command == B_decrease)
+                                             if(cmd_ptr->command == B_decrease)
                                              {
                                           	   if(intensity==0)
                                           	   	{
@@ -327,7 +288,7 @@ void UART0_IRQHandler()
                                           	   	}
                                           	   	else
                                           	   	{
-                                          	   	if(x.data[0]== 0x31)
+                                          	   	if(cmd_ptr->data[0]== 0x31)
                                           	   	            	   		{
                                           	   	            	   			intensity=intensity-1;
                                           	   	            	   		}
@@ -339,7 +300,7 @@ void UART0_IRQHandler()
 
 
 
-        }
+       } //syscheck
 
                }//while close
 
