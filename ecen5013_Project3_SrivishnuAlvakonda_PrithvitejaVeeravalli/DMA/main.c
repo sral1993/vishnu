@@ -73,7 +73,7 @@ void memmove_dma()
 {
 	if((length % 4)==0)
 	{
-		if((src+length-1)<dst)
+		if((src+length-1)>dst)
 			{
 				dma_init();
 				start();
@@ -94,7 +94,7 @@ void memmove_dma()
 		mod=length%4;
 		div=length/4;
 		length=div*4;
-		if((src+length-1)<dst)
+		if((src+length-1)>dst)
 					{
 						dma_init();
 						start();
@@ -126,7 +126,7 @@ void memzero_dma()
 	*src=0;
 	if((length % 4)==0)
 		{
-			if((src+length-1)<dst)
+			if((src+length-1)>dst)
 				{
 					dma_init();
 					start();
@@ -147,7 +147,7 @@ void memzero_dma()
 			mod=length%4;
 			div=length/4;
 			length=div*4;
-			if((src+length-1)<dst)
+			if((src+length-1)>dst)
 						{
 							dma_init();
 							start();
